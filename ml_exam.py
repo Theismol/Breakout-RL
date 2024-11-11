@@ -1,3 +1,4 @@
+import hashlib
 from collections import defaultdict
 
 import gymnasium as gym
@@ -8,8 +9,8 @@ from ale_py import ALEInterface
 from matplotlib.patches import Patch
 from tqdm import tqdm
 
-# env = gym.make("ALE/Breakout-v5", render_mode="rgb_array")
-env = gym.make("ALE/Breakout-v5")
+env = gym.make("ALE/Breakout-v5", render_mode="rgb_array")
+# env = gym.make("ALE/Breakout-v5")
 
 obs, info = env.reset()
 
@@ -24,7 +25,9 @@ class BreakoutAgent:
         final_epsilon,
         discount_factor,
     ):
-        self.q_values = defaultdict(lambda: np.zeros(env.action_space.n))
+        self.q_values = defaultdict(
+            lambda: np.zeros(env.action_space.n)
+        )  # Returns zeros if the key looked up does not exist
         self.lr = learning_rate
         self.discount_factor = discount_factor
         self.epsilon = start_epsilon
@@ -37,7 +40,7 @@ class BreakoutAgent:
         if np.random.random() < self.epsilon:
             return env.action_space.sample()
         else:
-            obs_tuple = tuple(obs.flatten())
+            obs_tuple = hashlib.md5(obs.flatten())
             return int(np.argmax(self.q_values[obs_tuple]))
 
     def update(
@@ -48,8 +51,8 @@ class BreakoutAgent:
         terminated,
         next_obs,
     ):
-        obs_tuple = tuple(obs.flatten())
-        next_obs_tuple = tuple(next_obs.flatten())
+        obs_tuple = hashlib.md5(obs.flatten())
+        next_obs_tuple = hashlib.md5(next_obs.flatten())
 
         future_q_value = (not terminated) * np.max(self.q_values[next_obs_tuple])
         temporal_difference = (
@@ -82,12 +85,12 @@ agent = BreakoutAgent(
     final_epsilon=final_epsilon,
     discount_factor=discount_factor,
 )
-"""env = gym.wrappers.RecordVideo(
+env = gym.wrappers.RecordVideo(
     env,
     video_folder="breakout_video",
     name_prefix="training",
     episode_trigger=lambda x: x % training_period == 0,
-)"""
+)
 env = gym.wrappers.RecordEpisodeStatistics(env, buffer_length=episodes)
 for episode in tqdm(range(episodes)):
     obs, info = env.reset()

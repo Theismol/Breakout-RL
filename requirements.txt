@@ -1,0 +1,9 @@
+gymnasium
+gymnasium[atari]
+gymnasium[other]
+seaborn
+numpy
+matplotlib
+tqdm
+ale-py
+
